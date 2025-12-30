@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Só Uma (baralho inspirado)</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 0; background:#0b0f17; color:#e8eefc; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 6px; font-size: 22px; }
+    p { margin: 0 0 16px; opacity: .9; }
+    .card {
+      background: #121a2a;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    .meta { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom: 10px; }
+    .pill {
+      display:inline-flex; gap:8px; align-items:center;
+      padding: 8px 12px; border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      font-size: 13px;
+    }
+    .words { display:grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
+    .word {
+      padding: 14px 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      font-size: 18px;
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+    }
+    .idx { opacity:.7; font-size: 13px; }
+    .controls { display:flex; gap:10px; flex-wrap:wrap; margin-top: 14px; }
+    button {
+      cursor:pointer;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.08);
+      color: #e8eefc;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    button:hover { background: rgba(255,255,255,.12); }
+    .danger { background: rgba(255, 90, 90, .14); border-color: rgba(255,90,90,.35); }
+    .danger:hover { background: rgba(255, 90, 90, .18); }
+    .row { display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; align-items:center; }
+    input[type="checkbox"] { transform: scale(1.1); }
+    .hint { opacity:.75; font-size: 13px; margin-top: 10px; }
+    .target {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(90, 200, 255, .10);
+      border: 1px solid rgba(90, 200, 255, .22);
+      display:none;
+    }
+    .target strong { font-size: 16px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Só Uma — baralho inspirado (110 cartas)</h1>
+    <p>Clique em <b>Nova carta</b>. O app embaralha e evita repetir até acabar.</p>
+
+    <div class="card">
+      <div class="meta">
+        <span class="pill">📄 Carta: <b id="cardNumber">—</b></span>
+        <span class="pill">🃏 Restantes no ciclo: <b id="remaining">—</b></span>
+        <span class="pill">🎯 Número sorteado: <b id="pickedNumber">—</b></span>
+      </div>
+
+      <div id="words" class="words"></div>
+
+      <div id="targetBox" class="target">
+        <div><strong>Alvo (nº <span id="targetN">—</span>):</strong> <span id="targetWord">—</span></div>
+      </div>
+
+      <div class="controls">
+        <button id="nextBtn">Nova carta</button>
+        <button id="pickBtn">Sortear número (1–5)</button>
+        <button class="danger" id="resetBtn">Reiniciar ciclo (embaralhar)</button>
+      </div>
+
+      <div class="row">
+        <label class="pill">
+          <input id="showTarget" type="checkbox" />
+          Mostrar alvo
+        </label>
+      </div>
+
+      <div class="hint">
+        Dica: normalmente o “alvo” fica só com o grupo (o adivinhador não vê). Aqui você controla.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ======= BARALHO (110 CARTAS) =======
+    // Cada carta é um array com 5 palavras.
+    const DECK = [
+      // 1 - 30
+      ["Sol","Praia","Calor","Verão","Bronzeado"],
+      ["Cachorro","Latido","Coleira","Osso","Amigo"],
+      ["Escola","Professor","Aula","Prova","Caderno"],
+      ["Pizza","Forno","Mussarela","Fatia","Itália"],
+      ["Chuva","Guarda-chuva","Molhado","Nuvem","Temporal"],
+      ["Futebol","Gol","Torcida","Estádio","Bola"],
+      ["Celular","Tela","Aplicativo","Mensagem","Bateria"],
+      ["Café","Xícara","Amargo","Manhã","Energia"],
+      ["Viagem","Mala","Avião","Hotel","Férias"],
+      ["Médico","Hospital","Consulta","Receita","Saúde"],
+      ["Livro","Página","Autor","Leitura","Biblioteca"],
+      ["Festa","Música","Dança","Balão","Alegria"],
+      ["Frio","Casaco","Inverno","Cachecol","Geada"],
+      ["Cinema","Filme","Pipoca","Tela","Sessão"],
+      ["Relógio","Hora","Atraso","Ponteiro","Alarme"],
+      ["Criança","Brinquedo","Escola","Sorriso","Parquinho"],
+      ["Dinheiro","Carteira","Compra","Preço","Troco"],
+      ["Natal","Presente","Papai Noel","Árvore","Família"],
+      ["Internet","Wi-Fi","Conexão","Site","Senha"],
+      ["Cozinha","Fogão","Receita","Panela","Temperar"],
+      ["Trânsito","Semáforo","Engarrafamento","Buzina","Rua"],
+      ["Amizade","Confiança","Risada","Apoio","Companhia"],
+      ["Academia","Peso","Treino","Suor","Músculo"],
+      ["Praia","Areia","Onda","Mar","Protetor"],
+      ["Professor","Lousa","Explicação","Prova","Ensino"],
+      ["Festa Junina","Fogueira","Milho","Quadrilha","Balão"],
+      ["Trabalho","Reunião","Prazo","Meta","Resultado"],
+      ["Cidade","Rua","Bairro","Praça","Movimento"],
+      ["Sorvete","Frio","Doce","Casquinha","Verão"],
+      ["Amor","Coração","Cuidado","Abraço","Afeto"],
+
+      // 31 - 110
+      ["Música","Fone","Volume","Playlist","Ritmo"],
+      ["Chave","Porta","Fechadura","Cadeado","Acesso"],
+      ["Mercado","Carrinho","Oferta","Caixa","Compra"],
+      ["Escola","Recreio","Amigo","Brincadeira","Intervalo"],
+      ["Médico","Estetoscópio","Batimento","Exame","Diagnóstico"],
+      ["Filme","Diretor","Cena","Ator","Oscar"],
+      ["Criança","Colo","Cuidado","Choro","Carinho"],
+      ["Foto","Câmera","Clique","Álbum","Memória"],
+      ["Rua","Calçada","Pedestre","Faixa","Trânsito"],
+      ["Estudo","Foco","Concentração","Silêncio","Resultado"],
+      ["Praia","Cadeira","Guarda-sol","Descanso","Brisa"],
+      ["Cama","Travesseiro","Sono","Descanso","Sonho"],
+      ["Restaurante","Cardápio","Garçom","Pedido","Conta"],
+      ["Igreja","Fé","Oração","Louvor","Esperança"],
+      ["Aniversário","Bolo","Vela","Parabéns","Festa"],
+      ["Chuva","Poça","Guarda-chuva","Pingos","Molhado"],
+      ["Escritório","Computador","Mesa","Relatório","Trabalho"],
+      ["Jantar","Mesa","Família","Conversa","Refeição"],
+      ["Hospital","Enfermagem","Plantão","Emergência","Cuidado"],
+      ["Brinquedo","Quebra-cabeça","Peça","Montar","Paciência"],
+      ["Religião","Bíblia","Ensino","Palavra","Amor"],
+      ["Avião","Decolagem","Asa","Viagem","Altura"],
+      ["Cabelo","Escova","Corte","Espelho","Salão"],
+      ["Compras","Sacola","Loja","Promoção","Preço"],
+      ["Escola","Lápis","Borracha","Escrita","Caderno"],
+      ["Verão","Piscina","Mergulho","Frescor","Sol"],
+      ["Inverno","Cobertor","Frio","Preguiça","Chocolate"],
+      ["Festa","Convite","Lista","Amigos","Encontro"],
+      ["Bicicleta","Pedal","Equilíbrio","Capacete","Passeio"],
+      ["Professor","Explicação","Quadro","Aula","Ensino"],
+      ["Dinheiro","Banco","Cartão","Senha","Conta"],
+      ["Televisão","Controle","Canal","Volume","Sofá"],
+      ["Viagem","Estrada","Parada","Destino","Caminho"],
+      ["Feira","Barraca","Fruta","Feira-livre","Sacola"],
+      ["Cozinha","Prato","Talher","Receita","Sabor"],
+      ["Academia","Esteira","Corrida","Fôlego","Suor"],
+      ["Criança","Escola","Mochila","Lanche","Aprender"],
+      ["Casamento","Aliança","Amor","Festa","União"],
+      ["Internet","Vídeo","Curtida","Comentário","Compartilhar"],
+      ["Trânsito","Farol","Parada","Atenção","Sinal"],
+      ["Almoço","Arroz","Feijão","Prato","Caseiro"],
+      ["Escola","Prova","Nota","Estudo","Resultado"],
+      ["Noite","Silêncio","Lua","Estrelas","Descanso"],
+      ["Trabalho","Esforço","Dedicação","Meta","Conquista"],
+      ["Criança","Desenho","Lápis","Cor","Criatividade"],
+      ["Natal","Ceia","Família","União","Gratidão"],
+      ["Ano Novo","Esperança","Recomeço","Planos","Futuro"],
+      ["Escola","Formatura","Diploma","Orgulho","Conquista"],
+      ["Campo","Grama","Ar Livre","Natureza","Descanso"],
+      ["Carro","Volante","Estrada","Direção","Viagem"],
+      ["Cachorro","Passeio","Guia","Rua","Alegria"],
+      ["Gato","Bigode","Sofá","Preguiça","Miado"],
+      ["Churrasco","Grelha","Carne","Amigos","Fim de semana"],
+      ["Escola","Amizade","Grupo","Trabalho","União"],
+      ["Cuidado","Atenção","Respeito","Empatia","Amor"],
+      ["Parque","Árvore","Banco","Caminhada","Lazer"],
+      ["Celular","Notificação","Mensagem","Alerta","Som"],
+      ["Manhã","Despertador","Sono","Café","Pressa"],
+      ["Tarde","Trabalho","Sol","Movimento","Rotina"],
+      ["Noite","Jantar","Descanso","Família","Conversa"],
+      ["Escola","Biblioteca","Silêncio","Leitura","Estudo"],
+      ["Praia","Caminhada","Areia","Pegada","Mar"],
+      ["Feira","Pastel","Caldo","Encontro","Tradição"],
+      ["Trabalho","Equipe","União","Resultado","Sucesso"],
+      ["Criança","Colo","Proteção","Segurança","Amor"],
+      ["Escola","Professor","Inspiração","Ensino","Futuro"],
+      ["Cidade","Bairro","Comunidade","Pessoas","Vida"],
+      ["Igreja","Comunhão","Encontro","Palavra","Fé"],
+      ["Casa","Lar","Aconchego","Segurança","Família"],
+      ["Amigo","Confiança","Conversa","Apoio","Verdade"],
+      ["Trabalho","Horário","Compromisso","Rotina","Disciplina"],
+      ["Escola","Educação","Base","Conhecimento","Futuro"],
+      ["Festa","Música","Dança","Energia","Alegria"],
+      ["Silêncio","Paz","Calma","Tranquilidade","Equilíbrio"],
+      ["Desafio","Superação","Força","Persistência","Vitória"],
+      ["Esperança","Fé","Confiança","Caminho","Luz"],
+      ["Gratidão","Reconhecimento","Respeito","Amor","Valor"],
+      ["Futuro","Sonho","Planejamento","Dedicação","Conquista"],
+      ["Vida","Tempo","Escolhas","Caminhos","Aprendizado"],
+      ["Jogo","Diversão","Risada","Amigos","Memória"],
+    ];
+
+    // ======= LÓGICA DO APP =======
+    let shuffled = [];
+    let idx = 0;
+    let currentCard = null;
+    let pickedNumber = null;
+
+    const elCardNumber = document.getElementById("cardNumber");
+    const elRemaining  = document.getElementById("remaining");
+    const elPicked     = document.getElementById("pickedNumber");
+    const elWords      = document.getElementById("words");
+    const showTarget   = document.getElementById("showTarget");
+    const targetBox    = document.getElementById("targetBox");
+    const targetN      = document.getElementById("targetN");
+    const targetWord   = document.getElementById("targetWord");
+
+    function fisherYates(array) {
+      const a = array.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function resetCycle() {
+      shuffled = fisherYates(DECK);
+      idx = 0;
+      currentCard = null;
+      pickedNumber = null;
+      elPicked.textContent = "—";
+      renderNextCard();
+    }
+
+    function renderCard(card) {
+      elWords.innerHTML = "";
+      card.forEach((w, i) => {
+        const div = document.createElement("div");
+        div.className = "word";
+        div.innerHTML = `<span>${w}</span><span class="idx">${i+1}</span>`;
+        elWords.appendChild(div);
+      });
+
+      // Atualiza alvo (se já tiver número sorteado)
+      updateTargetVisibility();
+    }
+
+    function updateMeta() {
+      elCardNumber.textContent = currentCard ? (idx) : "—";
+      elRemaining.textContent = String(shuffled.length - idx);
+    }
+
+    function pickNumber() {
+      pickedNumber = Math.floor(Math.random() * 5) + 1;
+      elPicked.textContent = String(pickedNumber);
+      updateTargetVisibility();
+    }
+
+    function updateTargetVisibility() {
+      const shouldShow = showTarget.checked && currentCard && pickedNumber;
+      targetBox.style.display = shouldShow ? "block" : "none";
+      if (currentCard && pickedNumber) {
+        targetN.textContent = String(pickedNumber);
+        targetWord.textContent = currentCard[pickedNumber - 1];
+      } else {
+        targetN.textContent = "—";
+        targetWord.textContent = "—";
+      }
+    }
+
+    function renderNextCard() {
+      if (idx >= shuffled.length) {
+        // acabou: novo ciclo
+        shuffled = fisherYates(DECK);
+        idx = 0;
+      }
+      currentCard = shuffled[idx];
+      idx += 1;
+      pickedNumber = null;
+      elPicked.textContent = "—";
+      renderCard(currentCard);
+      updateMeta();
+    }
+
+    // Eventos
+    document.getElementById("nextBtn").addEventListener("click", renderNextCard);
+    document.getElementById("pickBtn").addEventListener("click", pickNumber);
+    document.getElementById("resetBtn").addEventListener("click", resetCycle);
+    showTarget.addEventListener("change", updateTargetVisibility);
+
+    // Inicializa
+    resetCycle();
+  </script>
+</body>
+</html>
