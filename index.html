@@ -3,107 +3,450 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Só Uma (baralho inspirado)</title>
+  <title>Só Uma — Baralho inspirado</title>
+
   <style>
-    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-    body { margin: 0; background:#0b0f17; color:#e8eefc; }
-    .wrap { max-width: 760px; margin: 0 auto; padding: 24px; }
-    h1 { margin: 0 0 6px; font-size: 22px; }
-    p { margin: 0 0 16px; opacity: .9; }
-    .card {
-      background: #121a2a;
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 18px;
-      padding: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    :root{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+      --bg1:#0b0f17;
+      --bg2:#0e1630;
+      --card:#101a2b;
+      --stroke: rgba(255,255,255,.10);
+      --text:#f3f6ff;
+      --muted: rgba(243,246,255,.75);
+
+      --radius: 24px;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --shadow-soft: 0 12px 30px rgba(0,0,0,.25);
     }
-    .meta { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom: 10px; }
-    .pill {
+
+    body{
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(255,210,90,.15), transparent 55%),
+        radial-gradient(900px 700px at 80% 20%, rgba(90,200,255,.14), transparent 55%),
+        radial-gradient(900px 700px at 60% 90%, rgba(170,120,255,.13), transparent 55%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
+      min-height: 100vh;
+    }
+
+    /* ====== Modo Festa (cores + vibes) ====== */
+    body.festa{
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(255,120,170,.20), transparent 55%),
+        radial-gradient(900px 700px at 80% 20%, rgba(90,255,190,.16), transparent 55%),
+        radial-gradient(900px 700px at 60% 90%, rgba(170,120,255,.18), transparent 55%),
+        linear-gradient(180deg, #10123a, #0b0f17);
+    }
+    body.festa .title-badge{
+      background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      border-color: rgba(255,255,255,.18);
+    }
+    body.festa h1{
+      letter-spacing: .6px;
+    }
+    body.festa .logo-dot{
+      box-shadow: 0 0 30px rgba(255,255,255,.28);
+    }
+
+    .wrap{
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    h1{
+      margin:0;
+      font-size: 22px;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .logo-dot{
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255,206,86,.95), rgba(54,162,235,.95));
+      border: 1px solid rgba(255,255,255,.25);
+      display:inline-block;
+    }
+
+    .subtitle{
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .title-badge{
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--stroke);
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-soft);
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+
+    .pill{
       display:inline-flex; gap:8px; align-items:center;
       padding: 8px 12px; border-radius: 999px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.07);
+      border: 1px solid var(--stroke);
       font-size: 13px;
+      backdrop-filter: blur(6px);
+      user-select:none;
     }
-    .words { display:grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
-    .word {
-      padding: 14px 14px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.08);
-      font-size: 18px;
+    .pill b{ font-weight: 900; }
+
+    /* ====== Palco 3D (flip) ====== */
+    .stage{
+      perspective: 1200px;
+      width: 100%;
+    }
+
+    .card3d{
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform .55s cubic-bezier(.2,.7,.2,1);
+      border-radius: var(--radius);
+    }
+
+    .card3d.flipping{
+      transform: rotateY(180deg);
+    }
+
+    .face{
+      backface-visibility: hidden;
+      border-radius: var(--radius);
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    /* Frente (conteúdo do jogo) */
+    .face.front{
+      background:
+        radial-gradient(1000px 700px at 10% 0%, rgba(255,255,255,.08), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.06), transparent 35%),
+        var(--card);
+      padding: 18px;
+      position: relative;
+    }
+
+    /* Textura “papel” sutil (sem imagem externa) */
+    .face.front::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,.025), rgba(255,255,255,.025) 2px, transparent 2px, transparent 6px),
+        radial-gradient(600px 400px at 80% 20%, rgba(255,255,255,.04), transparent 55%),
+        radial-gradient(700px 500px at 20% 90%, rgba(255,255,255,.03), transparent 60%);
+      opacity: .7;
+      pointer-events:none;
+      mix-blend-mode: overlay;
+    }
+
+    .face.front > *{
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Verso (só estética) */
+    .face.back{
+      transform: rotateY(180deg);
+      background:
+        radial-gradient(900px 700px at 30% 20%, rgba(255,255,255,.10), transparent 55%),
+        linear-gradient(135deg, rgba(255,206,86,.18), rgba(153,102,255,.14)),
+        #0f1b33;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height: 220px;
+      padding: 22px;
+      position:absolute;
+      inset:0;
+    }
+
+    .backMark{
+      text-align:center;
+      opacity:.95;
+      max-width: 520px;
+      user-select:none;
+    }
+    .backMark .big{
+      font-size: 28px;
+      font-weight: 1000;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .backMark .small{
+      font-size: 13px;
+      color: rgba(243,246,255,.78);
+      line-height:1.4;
+    }
+
+    /* ====== Conteúdo ====== */
+    .meta{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      margin-bottom: 12px;
+    }
+
+    .words{
+      display:grid;
+      grid-template-columns: repeat(1, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    /* “Cartinhas coloridas” por opção */
+    .word{
+      position: relative;
+      padding: 14px 14px 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      overflow:hidden;
       display:flex;
       justify-content: space-between;
       align-items:center;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: .35px;
+      text-transform: uppercase;
+      user-select:none;
     }
-    .idx { opacity:.7; font-size: 13px; }
-    .controls { display:flex; gap:10px; flex-wrap:wrap; margin-top: 14px; }
-    button {
-      cursor:pointer;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.08);
-      color: #e8eefc;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-weight: 600;
+
+    /* faixa lateral */
+    .word::before{
+      content:"";
+      position:absolute;
+      left:0; top:0; bottom:0;
+      width: 10px;
+      background: rgba(255,255,255,.35);
     }
-    button:hover { background: rgba(255,255,255,.12); }
-    .danger { background: rgba(255, 90, 90, .14); border-color: rgba(255,90,90,.35); }
-    .danger:hover { background: rgba(255, 90, 90, .18); }
-    .row { display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; align-items:center; }
-    input[type="checkbox"] { transform: scale(1.1); }
-    .hint { opacity:.75; font-size: 13px; margin-top: 10px; }
-    .target {
+
+    /* brilho */
+    .word::after{
+      content:"";
+      position:absolute;
+      inset:-45%;
+      background: radial-gradient(circle at 20% 30%, rgba(255,255,255,.22), transparent 52%);
+      transform: rotate(10deg);
+      opacity: .6;
+      pointer-events:none;
+    }
+
+    .word > span{ position: relative; z-index: 1; }
+    .idx{
+      position: relative; z-index: 1;
+      opacity: .9;
+      font-size: 12px;
+      font-weight: 1000;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(0,0,0,.18);
+    }
+
+    /* Paletas por posição 1–5 */
+    .c1{ background: linear-gradient(135deg, rgba(255,99,132,.34), rgba(255,99,132,.12)); }
+    .c1::before{ background: rgba(255,99,132,.95); }
+
+    .c2{ background: linear-gradient(135deg, rgba(255,206,86,.36), rgba(255,206,86,.12)); }
+    .c2::before{ background: rgba(255,206,86,.95); }
+
+    .c3{ background: linear-gradient(135deg, rgba(75,192,192,.34), rgba(75,192,192,.12)); }
+    .c3::before{ background: rgba(75,192,192,.95); }
+
+    .c4{ background: linear-gradient(135deg, rgba(54,162,235,.34), rgba(54,162,235,.12)); }
+    .c4::before{ background: rgba(54,162,235,.95); }
+
+    .c5{ background: linear-gradient(135deg, rgba(153,102,255,.34), rgba(153,102,255,.12)); }
+    .c5::before{ background: rgba(153,102,255,.95); }
+
+    /* ====== Alvo ====== */
+    .target{
       margin-top: 12px;
       padding: 12px 14px;
-      border-radius: 14px;
+      border-radius: 16px;
       background: rgba(90, 200, 255, .10);
       border: 1px solid rgba(90, 200, 255, .22);
       display:none;
     }
-    .target strong { font-size: 16px; }
+    .target strong{ font-size: 15px; }
+
+    /* ====== Controles ====== */
+    .controls{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top: 16px;
+    }
+
+    button{
+      cursor:pointer;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.09);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 14px;
+      font-weight: 900;
+      letter-spacing:.2px;
+      backdrop-filter: blur(6px);
+      transition: transform .06s ease, background .2s ease;
+      user-select:none;
+    }
+    button:hover{ background: rgba(255,255,255,.13); }
+    button:active{ transform: translateY(1px); }
+
+    .danger{
+      background: rgba(255, 90, 90, .14);
+      border-color: rgba(255,90,90,.35);
+    }
+    .danger:hover{ background: rgba(255, 90, 90, .18); }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+      align-items:center;
+    }
+
+    label.pill{
+      gap:10px;
+      cursor:pointer;
+    }
+    input[type="checkbox"]{ transform: scale(1.1); cursor:pointer; }
+
+    .hint{
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+      line-height:1.35;
+    }
+
+    /* ====== Confete (Modo Festa) ====== */
+    canvas#confetti{
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .25s ease;
+    }
+    body.festa canvas#confetti{
+      opacity: 1;
+    }
+
+    /* ====== Modo Adivinhador ====== */
+    .modeBadge{
+      font-weight: 1000;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+    }
+    .adivinhador .target,
+    .adivinhador #pickBtn,
+    .adivinhador #showTargetPill{
+      display: none !important;
+    }
+    .adivinhador .hint::before{
+      content:"Modo Adivinhador: ";
+      font-weight: 900;
+      color: rgba(255,255,255,.9);
+    }
   </style>
 </head>
+
 <body>
+  <canvas id="confetti"></canvas>
+
   <div class="wrap">
-    <h1>Só Uma — baralho inspirado (110 cartas)</h1>
-    <p>Clique em <b>Nova carta</b>. O app embaralha e evita repetir até acabar.</p>
-
-    <div class="card">
-      <div class="meta">
-        <span class="pill">📄 Carta: <b id="cardNumber">—</b></span>
-        <span class="pill">🃏 Restantes no ciclo: <b id="remaining">—</b></span>
-        <span class="pill">🎯 Número sorteado: <b id="pickedNumber">—</b></span>
+    <div class="topbar">
+      <div>
+        <h1><span class="logo-dot"></span> Só Uma — baralho inspirado</h1>
+        <div class="subtitle">
+          Cartas aleatórias sem repetir até acabar o ciclo. Visual “party game” com cores por opção.
+        </div>
       </div>
 
-      <div id="words" class="words"></div>
-
-      <div id="targetBox" class="target">
-        <div><strong>Alvo (nº <span id="targetN">—</span>):</strong> <span id="targetWord">—</span></div>
-      </div>
-
-      <div class="controls">
-        <button id="nextBtn">Nova carta</button>
-        <button id="pickBtn">Sortear número (1–5)</button>
-        <button class="danger" id="resetBtn">Reiniciar ciclo (embaralhar)</button>
-      </div>
-
-      <div class="row">
-        <label class="pill">
-          <input id="showTarget" type="checkbox" />
-          Mostrar alvo
+      <div class="title-badge">
+        <span class="pill">🎭 Modo: <b id="modeLabel" class="modeBadge">Mestre</b></span>
+        <label class="pill" title="Deixa o visual mais “festa” e liga um confete discreto">
+          <input id="festaToggle" type="checkbox" />
+          Modo Festa
+        </label>
+        <label class="pill" title="Esconde alvo e número sorteado">
+          <input id="adivToggle" type="checkbox" />
+          Modo Adivinhador
         </label>
       </div>
+    </div>
 
-      <div class="hint">
-        Dica: normalmente o “alvo” fica só com o grupo (o adivinhador não vê). Aqui você controla.
+    <div class="stage">
+      <div id="card3d" class="card3d">
+        <div class="face front">
+          <div class="meta">
+            <span class="pill">📄 Carta: <b id="cardNumber">—</b></span>
+            <span class="pill">🃏 Restantes no ciclo: <b id="remaining">—</b></span>
+            <span class="pill">🎯 Número sorteado: <b id="pickedNumber">—</b></span>
+          </div>
+
+          <div id="words" class="words"></div>
+
+          <div id="targetBox" class="target">
+            <div><strong>Alvo (nº <span id="targetN">—</span>):</strong> <span id="targetWord">—</span></div>
+          </div>
+
+          <div class="controls">
+            <button id="nextBtn">Nova carta</button>
+            <button id="pickBtn">Sortear número (1–5)</button>
+            <button class="danger" id="resetBtn">Reiniciar ciclo</button>
+          </div>
+
+          <div class="row">
+            <label id="showTargetPill" class="pill">
+              <input id="showTarget" type="checkbox" />
+              Mostrar alvo
+            </label>
+          </div>
+
+          <div class="hint" id="hintText">
+            Dica: no jogo original, o “alvo” costuma ficar só com o grupo. Aqui você controla.
+          </div>
+        </div>
+
+        <div class="face back">
+          <div class="backMark">
+            <div class="big">Só Uma</div>
+            <div class="small">
+              Baralho inspirado • Visual alegre • Sem repetir no ciclo<br/>
+              Clique em <b>Nova carta</b> para virar a rodada.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
     // ======= BARALHO (110 CARTAS) =======
-    // Cada carta é um array com 5 palavras.
     const DECK = [
       // 1 - 30
       ["Sol","Praia","Calor","Verão","Bronzeado"],
@@ -220,12 +563,9 @@
       ["Jogo","Diversão","Risada","Amigos","Memória"],
     ];
 
-    // ======= LÓGICA DO APP =======
-    let shuffled = [];
-    let idx = 0;
-    let currentCard = null;
-    let pickedNumber = null;
-
+    // ======= ELEMENTOS =======
+    const elBody       = document.body;
+    const elCard3d     = document.getElementById("card3d");
     const elCardNumber = document.getElementById("cardNumber");
     const elRemaining  = document.getElementById("remaining");
     const elPicked     = document.getElementById("pickedNumber");
@@ -234,7 +574,19 @@
     const targetBox    = document.getElementById("targetBox");
     const targetN      = document.getElementById("targetN");
     const targetWord   = document.getElementById("targetWord");
+    const festaToggle  = document.getElementById("festaToggle");
+    const adivToggle   = document.getElementById("adivToggle");
+    const modeLabel    = document.getElementById("modeLabel");
+    const hintText     = document.getElementById("hintText");
 
+    // ======= ESTADO =======
+    let shuffled = [];
+    let idx = 0;
+    let currentCard = null;
+    let pickedNumber = null;
+    let flippingLock = false;
+
+    // ======= UTIL =======
     function fisherYates(array) {
       const a = array.slice();
       for (let i = a.length - 1; i > 0; i--) {
@@ -244,42 +596,17 @@
       return a;
     }
 
-    function resetCycle() {
-      shuffled = fisherYates(DECK);
-      idx = 0;
-      currentCard = null;
-      pickedNumber = null;
-      elPicked.textContent = "—";
-      renderNextCard();
-    }
-
-    function renderCard(card) {
-      elWords.innerHTML = "";
-      card.forEach((w, i) => {
-        const div = document.createElement("div");
-        div.className = "word";
-        div.innerHTML = `<span>${w}</span><span class="idx">${i+1}</span>`;
-        elWords.appendChild(div);
-      });
-
-      // Atualiza alvo (se já tiver número sorteado)
-      updateTargetVisibility();
-    }
-
     function updateMeta() {
-      elCardNumber.textContent = currentCard ? (idx) : "—";
+      elCardNumber.textContent = currentCard ? String(idx) : "—";
       elRemaining.textContent = String(shuffled.length - idx);
     }
 
-    function pickNumber() {
-      pickedNumber = Math.floor(Math.random() * 5) + 1;
-      elPicked.textContent = String(pickedNumber);
-      updateTargetVisibility();
-    }
-
     function updateTargetVisibility() {
-      const shouldShow = showTarget.checked && currentCard && pickedNumber;
+      const isAdiv = elBody.classList.contains("adivinhador");
+      const shouldShow = !isAdiv && showTarget.checked && currentCard && pickedNumber;
+
       targetBox.style.display = shouldShow ? "block" : "none";
+
       if (currentCard && pickedNumber) {
         targetN.textContent = String(pickedNumber);
         targetWord.textContent = currentCard[pickedNumber - 1];
@@ -289,28 +616,192 @@
       }
     }
 
-    function renderNextCard() {
+    function renderCard(card) {
+      elWords.innerHTML = "";
+      card.forEach((w, i) => {
+        const div = document.createElement("div");
+        div.className = `word c${i+1}`; // cor por posição
+        div.innerHTML = `<span>${w}</span><span class="idx">${i+1}</span>`;
+        elWords.appendChild(div);
+      });
+      updateTargetVisibility();
+    }
+
+    // ======= FLIP ANIMATION =======
+    function flipToNextCard() {
+      if (flippingLock) return;
+      flippingLock = true;
+
+      // 1) vira (mostra o "verso")
+      elCard3d.classList.add("flipping");
+
+      // 2) no meio do flip, troca o conteúdo
+      window.setTimeout(() => {
+        drawNextCardInternal();
+      }, 260);
+
+      // 3) volta (frente)
+      window.setTimeout(() => {
+        elCard3d.classList.remove("flipping");
+        window.setTimeout(() => { flippingLock = false; }, 80);
+      }, 540);
+    }
+
+    // ======= CICLO DO BARALHO =======
+    function resetCycle() {
+      shuffled = fisherYates(DECK);
+      idx = 0;
+      currentCard = null;
+      pickedNumber = null;
+      elPicked.textContent = "—";
+      showTarget.checked = false;
+      drawNextCardInternal();
+    }
+
+    function drawNextCardInternal() {
       if (idx >= shuffled.length) {
-        // acabou: novo ciclo
         shuffled = fisherYates(DECK);
         idx = 0;
       }
+
       currentCard = shuffled[idx];
       idx += 1;
+
       pickedNumber = null;
       elPicked.textContent = "—";
       renderCard(currentCard);
       updateMeta();
     }
 
-    // Eventos
-    document.getElementById("nextBtn").addEventListener("click", renderNextCard);
+    function pickNumber() {
+      pickedNumber = Math.floor(Math.random() * 5) + 1;
+      elPicked.textContent = String(pickedNumber);
+      updateTargetVisibility();
+    }
+
+    // ======= MODO FESTA (confete sutil) =======
+    const confetti = document.getElementById("confetti");
+    const ctx = confetti.getContext("2d", { alpha: true });
+
+    function resizeConfetti(){
+      confetti.width = window.innerWidth;
+      confetti.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeConfetti);
+    resizeConfetti();
+
+    const confettiState = {
+      on: false,
+      pieces: [],
+      lastTime: 0
+    };
+
+    function spawnConfetti(n=18){
+      const w = confetti.width, h = confetti.height;
+      for (let i=0;i<n;i++){
+        confettiState.pieces.push({
+          x: Math.random()*w,
+          y: -20 - Math.random()*h*0.3,
+          r: 3 + Math.random()*4,
+          vx: -0.6 + Math.random()*1.2,
+          vy: 0.8 + Math.random()*1.6,
+          rot: Math.random()*Math.PI*2,
+          vr: (-0.08 + Math.random()*0.16),
+          // sem setar cor fixa via CSS; aqui são variações internas “festa”
+          hue: Math.floor(Math.random()*360),
+          life: 1,
+        });
+      }
+    }
+
+    function stepConfetti(t){
+      if (!confettiState.on) return;
+
+      if (!confettiState.lastTime) confettiState.lastTime = t;
+      const dt = Math.min(32, t - confettiState.lastTime);
+      confettiState.lastTime = t;
+
+      const w = confetti.width, h = confetti.height;
+
+      // spawn leve
+      if (Math.random() < 0.12) spawnConfetti(8);
+
+      ctx.clearRect(0,0,w,h);
+
+      confettiState.pieces.forEach(p => {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.rot += p.vr * dt;
+        p.life *= 0.999;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = `hsl(${p.hue} 90% 60%)`;
+        ctx.fillRect(-p.r, -p.r*0.55, p.r*2, p.r*1.1);
+        ctx.restore();
+      });
+
+      // remove os que saíram
+      confettiState.pieces = confettiState.pieces.filter(p => p.y < h + 40 && p.x > -80 && p.x < w + 80);
+
+      requestAnimationFrame(stepConfetti);
+    }
+
+    function setFestaMode(on){
+      elBody.classList.toggle("festa", on);
+      confettiState.on = on;
+      if (on){
+        spawnConfetti(26);
+        confettiState.lastTime = 0;
+        requestAnimationFrame(stepConfetti);
+      } else {
+        ctx.clearRect(0,0,confetti.width, confetti.height);
+        confettiState.pieces = [];
+      }
+    }
+
+    // ======= MODO ADIVINHADOR =======
+    function setAdivinhadorMode(on){
+      elBody.classList.toggle("adivinhador", on);
+      modeLabel.textContent = on ? "Adivinhador" : "Mestre";
+
+      if (on){
+        hintText.textContent = "Você não vê o número nem o alvo. Use o outro celular/tela como Mestre.";
+        showTarget.checked = false;
+        elPicked.textContent = "—";
+        pickedNumber = null;
+      } else {
+        hintText.textContent = "Dica: no jogo original, o “alvo” costuma ficar só com o grupo. Aqui você controla.";
+      }
+      updateTargetVisibility();
+    }
+
+    // ======= EVENTOS =======
+    document.getElementById("nextBtn").addEventListener("click", flipToNextCard);
     document.getElementById("pickBtn").addEventListener("click", pickNumber);
-    document.getElementById("resetBtn").addEventListener("click", resetCycle);
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      // reset com flip (bonitinho)
+      if (flippingLock) return;
+      flippingLock = true;
+      elCard3d.classList.add("flipping");
+      window.setTimeout(() => { resetCycle(); }, 260);
+      window.setTimeout(() => {
+        elCard3d.classList.remove("flipping");
+        window.setTimeout(() => { flippingLock = false; }, 80);
+      }, 540);
+    });
+
     showTarget.addEventListener("change", updateTargetVisibility);
 
-    // Inicializa
+    festaToggle.addEventListener("change", (e) => setFestaMode(e.target.checked));
+    adivToggle.addEventListener("change", (e) => setAdivinhadorMode(e.target.checked));
+
+    // ======= INICIALIZA =======
     resetCycle();
+    setFestaMode(false);
+    setAdivinhadorMode(false);
   </script>
 </body>
 </html>
